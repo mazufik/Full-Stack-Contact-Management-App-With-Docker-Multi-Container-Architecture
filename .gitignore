@@ -1,0 +1,9 @@
+# Environment variables
+api-contact-management/.env
+
+# OS generated files
+api-contact-management/.DS_Store
+api-contact-management/Thumbs.db
+
+# app build result
+api-contact-form
