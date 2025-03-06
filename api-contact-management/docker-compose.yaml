@@ -1,0 +1,71 @@
+services:
+  # MariaDB Service
+  mariadb-contact-management:
+    image: mariadb:latest
+    container_name: mariadb-contact-management
+    restart: on-failure
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    # ports:
+    #   - "${HOST_MARIADB_PORT}:${CONT_MARIADB_PORT}"
+    volumes:
+      - mariadb-contact-management-data:/var/lib/mysql
+    networks:
+      - contact-management-network-database
+
+  # PHPMyAdmin Service
+  phpmyadmin-contact-management:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin-contact-management
+    restart: on-failure
+    environment:
+      - PMA_HOST=mariadb-contact-management
+      - PMA_PORT=${CONT_MARIADB_PORT}
+    env_file:
+      - .env
+    ports:
+      - "${HOST_PHPMYADMIN_PORT}:${CONT_PHPMYADMIN_PORT}"
+    depends_on:
+      - mariadb-contact-management
+    networks:
+      - contact-management-network-database
+
+  # API Contact Management Service
+  api-contact-management:
+    build: .
+    image: api-contact-management:1.0.0
+    container_name: api-contact-management
+    restart: on-failure
+    depends_on:
+      - mariadb-contact-management
+    env_file:
+      - .env
+    ports:
+      - "${HOST_API_PORT}:${CONT_API_PORT}"
+    environment:
+      - APP_PORT=${CONT_API_PORT}
+      - APP_TIMEZONE=Asia/Jakarta
+      - DB_HOST=mariadb-contact-management
+      - DB_PORT=${CONT_MARIADB_PORT}
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME=${MYSQL_DATABASE}
+      - CORS_ALLOWED_ORIGINS=http://localhost:8081,http://localhost:8082,http://cms-contact-management:8081,http://client-contact-management:8082
+      - CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
+      - CORS_ALLOWED_HEADERS=Origin,Content-Type,Accept,Authorization
+      - CORS_ALLOW_CREDENTIALS=true
+      - CORS_EXPOSE_HEADERS=Content-Length,Content-Type
+    networks:
+      - contact-management-network-database
+
+volumes:
+  mariadb-contact-management-data:
+
+networks:
+  contact-management-network-database:
+    driver: bridge
